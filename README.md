@@ -1,0 +1,2 @@
+# CloudFront-CustomDomainWithHTTPSCommunication-IncreasedCacheHitRatio
+CloudFront-CustomDomainWithHTTPSCommunication-IncreasedCacheHitRatio
