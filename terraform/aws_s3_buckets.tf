@@ -2,7 +2,16 @@ resource "aws_s3_bucket" "example" {
   bucket = "sample-bucket-${var.account_number}"
 }
 
-resource "aws_s3_object" "sample_s3_object" {
+resource "aws_s3_object" "indexPage" {
+  depends_on = [aws_s3_bucket.example]
+
+  bucket = "sample-bucket-${var.account_number}"
+  key    = "index.html"
+  source = "../files/index.html"
+  content_type = "text/html"
+}
+
+resource "aws_s3_object" "image" {
   depends_on = [aws_s3_bucket.example]
 
   bucket = "sample-bucket-${var.account_number}"
@@ -16,26 +25,28 @@ resource "aws_s3_bucket_public_access_block" "example" {
 
   block_public_acls       = true  
   ignore_public_acls      = true
-  block_public_policy     = false # Bucket policy can't be added without this
-  restrict_public_buckets = false # Object can't be publicly accessed, as defined by the bucket policy below, without this
+  block_public_policy     = true # Bucket policy can't be added if this is true
+  restrict_public_buckets = true # Object can't be publicly accessed, as defined by the bucket policy below, if this is true
 }
 
 resource "aws_s3_bucket_policy" "example" {
     bucket = aws_s3_bucket.example.id
     policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2008-10-17"
     Statement = [
       {
-        Sid = "PublicReadGetObject"
-        Principal = "*"
-        Action = [
-          "s3:GetObject",
-        ]
-        Effect   = "Allow"
-        Resource = [
-          "arn:aws:s3:::sample-bucket-${var.account_number}",
-          "arn:aws:s3:::sample-bucket-${var.account_number}/MickeyMouse.jpg"
-        ]
+        "Sid": "AllowCloudFrontServicePrincipal",
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "cloudfront.amazonaws.com"
+        },
+        "Action": "s3:GetObject",
+        "Resource": "arn:aws:s3:::sample-bucket-767398097783/*",
+        "Condition": {
+            "StringEquals": {
+            "AWS:SourceArn": aws_cloudfront_distribution.s3_distribution.arn
+          }
+        }
       },
     ]
   })
